@@ -6,14 +6,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\legacysite\**" />
+    <Content Remove="wwwroot\legacysite\**" />
+    <EmbeddedResource Remove="wwwroot\legacysite\**" />
+    <None Remove="wwwroot\legacysite\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="3.2.0-preview1.20073.1" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="3.2.0-preview1.20073.1" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor.DevServer" Version="3.2.0-preview1.20073.1" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor.HttpClient" Version="3.2.0-preview1.20073.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\legacysite\" />
   </ItemGroup>
 
 </Project>
