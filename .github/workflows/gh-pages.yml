@@ -17,10 +17,11 @@ jobs:
         dotnet-version: 3.1.101
     - name: Publish with dotnet
       run: dotnet publish --configuration Release --output build
+    - name: Add .nojekyll
+      run: touch $GITHUB_WORKSPACE/build/JFronny.github.io/dist/.nojekyll
     - name: Deploy to Github Pages
       uses: JamesIves/github-pages-deploy-action@releases/v3
       with:
-        #ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        BRANCH: gh-pages # The branch the action should deploy to.
-        FOLDER: build/JFronny.github.io/dist # The folder the action should deploy.
+        BRANCH: gh-pages
+        FOLDER: build/JFronny.github.io/dist
