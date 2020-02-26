@@ -1,0 +1,147 @@
+﻿@page "/roulette/accepted"
+@inject HttpClient Http;
+@inject IJSRuntime JSRuntime;
+@using Chan.Net;
+@using Chan.Net.JsonModel;
+
+<h1>4chan-Roulette</h1>
+
+Have fun...
+<br>
+<br>
+<a class="btn btn-dark" href="/home/roulette/accepted#" @onclick="newImage">New post</a>
+<br>
+<small>@Status</small>
+<br>
+<br>
+<div class="card" style="width: 100%; @CardRenderFactor">
+    <img class="card-img-top" style="max-height:300px" id="cardimageref">
+    <div class="card-body">
+        <h5 class="card-title">@Title</h5>
+        <p class="card-text">@Text</p>
+        <p>Type: @Type</p>
+        <a target="_blank" rel="noopener noreferrer" href="@Link" class="btn btn-primary">View</a>
+    </div>
+</div>
+
+@code
+{
+    //data:image/png;base64,
+    private string Title = "";
+    private string Link = "";
+    private string Text = "";
+    private string Type = "";
+    private string CardRenderFactor = "display: none";
+    private string Status = "Waiting...";
+    MetaBoard[] boards;
+    static Random rnd = new Random();
+    private async Task newImage()
+    {
+        try
+        {
+            Status = "Loading image...";
+            if (boards == null)
+            {
+                await init();
+            }
+            Thread[] thl = await boards[rnd.Next(boards.Length)].GetThreads();
+            int i = rnd.Next(thl.Length);
+            Thread th = thl[i];
+            Title = $"{th.Name}: {(string.IsNullOrWhiteSpace(th.Subject) ? "Untitled" : th.Subject)} - {i + 1}/{thl.Length}"; ;
+            Link = $"https://boards.4channel.org/{th.Board.BoardId}/thread/{th.PostNumber}";
+            Text = th.Message;
+            await JSRuntime.InvokeVoidAsync("setImage", th.Image.Thumbnail.AbsoluteUri, "cardimageref");
+            CardRenderFactor = "";
+            Status = "Waiting...";
+        }
+        catch (Exception e)
+        {
+            Status = $"Image load failed: {e}";
+        }
+    }
+
+    private async Task init()
+    {
+        try
+        {
+            Status = "Fetching board list...";
+            List<BoardInfo> m = JsonDeserializer.Deserialize<BoardListModel>(await DownloadString(@"https://a.4cdn.org/boards.json")).boards;
+            boards = m.Select(s => new MetaBoard(s, this)).ToArray();
+            Status = "Waiting...";
+        }
+        catch (Exception e)
+        {
+            Status = $"Init failed: {e}<br>Please reload!";
+        }
+    }
+
+    private async Task<string> DownloadString(string uri)
+    {
+        return await Http.GetStringAsync($"https://cors-anywhere.herokuapp.com/{uri}");
+    }
+
+    private async Task<string> DownloadImage(string uri)
+    {
+        return await DownloadString(uri);
+    }
+
+    private async Task<IEnumerable<Thread>> GetThreads(Board board)
+    {
+        List<PageModel> pages = JsonDeserializer.Deserialize<List<PageModel>>(await DownloadString($"https://a.4cdn.org/{board.BoardId}/catalog.json"));
+
+        return from page in pages
+               from thread in page.threads
+               select new Thread(board, unchecked((uint)thread.no))
+               {
+                   Name = thread.name,
+                   Message = thread.com == null ? null : PostManager.CleanPostMessage((string)thread.com),
+                   Image = !string.IsNullOrEmpty(thread.ext) ? new PostedImage(board.BoardId, (long)thread.tim, (string)thread.ext)
+                   {
+                       Filename = thread.filename,
+                       Height = thread.h,
+                       Width = thread.w,
+                       Filesize = thread.fsize,
+                       Md5Hash = thread.md5,
+                   } : null,
+                   TimeCreated = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).Add(TimeSpan.FromSeconds(thread.time)),
+                   Id = thread.id,
+                   Country = thread.country,
+                   CountryName = thread.country_name,
+                   EpochTimeCreated = thread.time,
+                   Trip = thread.trip,
+
+                   Subject = System.Net.WebUtility.HtmlDecode(thread.sub ?? ""),
+                   Sticky = thread.sticky == 1,
+                   Closed = thread.closed == 1,
+               };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await init();
+        await newImage();
+    }
+
+    private struct MetaBoard
+    {
+        public readonly BoardInfo Info;
+        public readonly Board Board;
+        private Thread[] _threads;
+        private RouletteMain main;
+        public async Task<Thread[]> GetThreads()
+        {
+            if (_threads == null)
+            {
+                _threads = (await main.GetThreads(Board)).OrderBy(s => rnd.NextDouble()).ToArray();
+            }
+            return _threads;
+        }
+        public MetaBoard(BoardInfo info, RouletteMain main)
+        {
+            this.main = main;
+            Info = info;
+            Board = new Board(info.ShortName);
+            _threads = null;
+        }
+    }
+}

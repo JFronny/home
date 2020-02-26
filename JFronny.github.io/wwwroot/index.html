@@ -3,10 +3,22 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <title>JFronny.github.io</title>
+    <title>JFronny</title>
     <base href="/home/" />
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link href="css/site.css" rel="stylesheet" />
+    <script>
+        window.setImage = (source, target) => {
+            var x = new XMLHttpRequest();
+            x.open('GET', 'https://cors-anywhere.herokuapp.com/' + source);
+            x.responseType = 'blob';
+            x.onload = function () {
+                var targ = document.getElementById(target);
+                targ.src = window.URL.createObjectURL(x.response);
+            };
+            x.send();
+        };
+    </script>
 </head>
 
 <body>

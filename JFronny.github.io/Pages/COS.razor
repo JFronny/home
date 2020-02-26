@@ -9,13 +9,13 @@ C-OS is an experimental debian based linux distribution created by me.
 <a class="btn btn-dark" href="https://drive.google.com/uc?id=1KZpm6UE-G4fjFsT79xzdGXy8_5AImR-0&export=download"><span class="oi oi-data-transfer-download" aria-hidden="true"></span> Download</a>
 <br>
 <br>
-<small>You can also <a href="/cos#" @onclick="ShowVerifyPrompt" @onmouseout="PopupButtonLeave" @onmouseover="PopupButtonEnter">verify your download</a></small>
+<small>You can also <a href="/home/cos#" @onclick="ShowVerifyPrompt" @onmouseout="PopupButtonLeave" @onmouseover="PopupButtonEnter">verify your download</a></small>
 @if (popupVisible)
 {
     <div class="card" style="width: 27rem;">
         <div class="card-body">
             <h5 class="card-title">Checksums</h5>
-            <a @onclick="ClosePrompt" href="/cos#"><span class="oi oi-circle-x" style="position: absolute;right: 10px;top: 10px;"></span></a>
+            <a @onclick="ClosePrompt" href="/home/cos#"><span class="oi oi-circle-x" style="position: absolute;right: 10px;top: 10px;"></span></a>
             <h6 class="card-subtitle mb-2 text-muted">MD5</h6>
             <p class="card-text">4C7C446ACBB9A6D7B888B2787F033BED</p>
             <h6 class="card-subtitle mb-2 text-muted">SHA1</h6>
