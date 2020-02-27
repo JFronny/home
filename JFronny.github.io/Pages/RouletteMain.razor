@@ -9,7 +9,7 @@
 Have fun...
 <br>
 <br>
-<a class="btn btn-dark" href="/home/roulette/accepted#" @onclick="newImage">New post</a>
+<a class="btn btn-dark @LoadClassFactor" href="/home/roulette/accepted#" @onclick="newImage">New card</a>
 <br>
 <small>@Status</small>
 <br>
@@ -31,6 +31,7 @@ Have fun...
     private string Text = "";
     private string Type = "";
     private string CardRenderFactor = "display: none";
+    private string LoadClassFactor = "disabled";
     private string Status = "Waiting...";
     MetaBoard[] boards;
     static Random rnd = new Random();
@@ -38,7 +39,8 @@ Have fun...
     {
         try
         {
-            Status = "Loading image...";
+            LoadClassFactor = "disabled";
+            Status = "Loading card...";
             if (boards == null)
             {
                 await init();
@@ -57,13 +59,18 @@ Have fun...
         {
             Status = $"Image load failed: {e}";
         }
+        finally
+        {
+            LoadClassFactor = "";
+        }
     }
 
     private async Task init()
     {
         try
         {
-            Status = "Fetching board list...";
+            LoadClassFactor = "disabled";
+            Status = "Initializing... (This may take a minute)";
             List<BoardInfo> m = JsonDeserializer.Deserialize<BoardListModel>(await DownloadString(@"https://a.4cdn.org/boards.json")).boards;
             boards = m.Select(s => new MetaBoard(s, this)).ToArray();
             Status = "Waiting...";
@@ -71,6 +78,10 @@ Have fun...
         catch (Exception e)
         {
             Status = $"Init failed: {e}<br>Please reload!";
+        }
+        finally
+        {
+            LoadClassFactor = "";
         }
     }
 
