@@ -18,7 +18,7 @@ It supports custom repositories, install scripts and has a minimalistic UI for s
     private static XElement el;
     private async Task ReadyDownload()
     {
-        HttpResponseMessage message = await Http.GetAsync("https://gist.githubusercontent.com/JFronny/f1ccbba3d8a2f5862592bb29fdb612c4/raw/Meta.xml");
+        HttpResponseMessage message = await Http.GetAsync("https://github.com/JFronny/UpTool2/releases/latest/download/meta.xml");
         string content = await message.Content.ReadAsStringAsync();
         el = XElement.Parse(content);
         File = el.Element("File").Value;
