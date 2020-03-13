@@ -7,23 +7,38 @@ UpTool 2 is the successor of CC-Toolbox. It is an easy-to-use package manager fo
 <br>
 It supports custom repositories, install scripts and has a minimalistic UI for simple package management
 <br>
+To install UpTool2 you will need .NET Core. You will be prompted with a window containing further information after starting the app
 <br>
-<a class="btn btn-dark" href="@File"><span class="oi oi-data-transfer-download" aria-hidden="true"></span> Download (@Version)</a>
+<br>
+@if (Loaded)
+{
+    <a class="btn btn-dark" href="@File"><span class="oi oi-data-transfer-download" aria-hidden="true"></span> Download (@Version)</a>
+}
+else
+{
+    <a class="btn btn-dark disabled" href="@File"><span class="oi oi-data-transfer-download" aria-hidden="true"></span> Loading...</a>
+}
+<br>
+<small>@Hash</small>
 
 @code
 {
     private static string File = "";
     private static string Version = "";
     private static string Hash = "";
+    private static bool Loaded = false;
     private static XElement el;
     private async Task ReadyDownload()
     {
-        HttpResponseMessage message = await Http.GetAsync("https://gist.githubusercontent.com/JFronny/f1ccbba3d8a2f5862592bb29fdb612c4/raw/Meta.xml");
-        string content = await message.Content.ReadAsStringAsync();
+        JArray assets = (JArray)JArray.Parse(await Http.GetStringAsync("https://api.github.com/repos/JFronny/UpTool2/releases"))[0]["assets"];
+        JObject metaAsset = (JObject)assets.First(s => s.Value<string>("name") == "meta.xml");
+        string metaString = $"https://cors-anywhere.herokuapp.com/{metaAsset.Value<string>("browser_download_url")}";
+        string content = await Http.GetStringAsync(metaString);
         el = XElement.Parse(content);
         File = el.Element("File").Value;
-        Version = "Version " + el.Element("Version").Value;
-        Hash = el.Element("Hash").Value;
+        Version = $"Version {el.Element("Version").Value}";
+        Hash = $"Hash: {el.Element("Hash").Value}";
+        Loaded = true;
     }
 
     protected override async Task OnInitializedAsync()
