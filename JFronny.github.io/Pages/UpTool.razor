@@ -1,5 +1,6 @@
 ﻿@page "/uptool"
 @inject HttpClient Http
+@inject IJSRuntime JsRuntime
 
 <h1>UpTool 2</h1>
 
@@ -10,42 +11,78 @@ It supports custom repositories, install scripts and has a minimalistic UI for s
 To install UpTool2 you will need .NET Core. You will be prompted with a window containing further information after starting the app
 <br>
 <br>
-@if (Loaded)
-{
-    <a class="btn btn-dark" href="@File"><span class="oi oi-data-transfer-download" aria-hidden="true"></span> Download (@Version)</a>
-}
-else
-{
-    <a class="btn btn-dark disabled" href="@File"><span class="oi oi-data-transfer-download" aria-hidden="true"></span> Loading...</a>
-}
-<br>
-<small>@Hash</small>
+<div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+    <div class="btn-group mr-2" role="group" aria-label="First group">
+        <a type="button" class="btn btn-dark btn-secondary @_buttonClassArg" href=@_currentDownload>Download for @_arch</a>
+        @if (_arch != DownloadArch.x86)
+        {
+            <a type="button" class="btn btn-dark btn-secondary @_buttonClassArg" href=@_x86Download>x86</a>
+        }
+        @if (_arch != DownloadArch.x64)
+        {
+            <a type="button" class="btn btn-dark btn-secondary @_buttonClassArg" href=@_x64Download>x64</a>
+        }
+        @if (_arch != DownloadArch.Generic)
+        {
+            <a type="button" class="btn btn-dark btn-secondary @_buttonClassArg" href=@_genericDownload>Generic</a>
+        }
+    </div>
+    <div class="btn-group" role="group" aria-label="Binary package">
+        <a type="button" class="btn btn-dark btn-secondary @_buttonClassArg" href="@_file">"Portable" (@_version)</a>
+    </div>
+</div>
 
 @code
 {
-    private static string File = "";
-    private static string Version = "";
-    private static string Hash = "";
-    private static bool Loaded = false;
-    private static XElement el;
+    private static string _file = "";
+    private static string _version = "";
+    private static string _x86Download = "";
+    private static string _x64Download = "";
+    private static string _genericDownload = "";
+    private static string _currentDownload = "";
+    private static string _buttonClassArg = "disabled";
+    private static DownloadArch _arch = DownloadArch.Generic;
+    private static XElement _el;
     private async Task ReadyDownload()
     {
+        _arch = GetArch(await JsRuntime.InvokeAsync<string>("getArch", new object[0]));
         JArray assets = (JArray)JArray.Parse(await Http.GetStringAsync("https://api.github.com/repos/JFronny/UpTool2/releases"))[0]["assets"];
         JObject metaAsset = (JObject)assets.First(s => s.Value<string>("name") == "meta.xml");
-        string metaString = $"https://cors-anywhere.herokuapp.com/{metaAsset.Value<string>("browser_download_url")}";
-        string content = await Http.GetStringAsync(metaString);
-        el = XElement.Parse(content);
-        File = el.Element("File").Value;
-        Version = $"Version {el.Element("Version").Value}";
-        Hash = $"Hash: {el.Element("Hash").Value}";
-        Loaded = true;
+        _el = XElement.Parse(await Http.GetStringAsync($"https://cors-anywhere.herokuapp.com/{metaAsset.Value<string>("browser_download_url")}"));
+        _file = _el.Element("File").Value;
+        _version = $"Version {_el.Element("Version").Value}";
+        _buttonClassArg = "";
+        _x86Download = GetDownload(DownloadArch.x86, assets);
+        _x64Download = GetDownload(DownloadArch.x64, assets);
+        _genericDownload = GetDownload(DownloadArch.Generic, assets);
+        _currentDownload = _arch switch { DownloadArch.x64 => _x64Download, DownloadArch.x86 => _x86Download, DownloadArch.Generic => _genericDownload, _ => throw new ArgumentOutOfRangeException()};
     }
+
+    private static string GetDownload(DownloadArch arch, JArray assets) => ((JObject) assets.First(s => s.Value<string>("name") == GetFileName(arch))).Value<string>("browser_download_url");
+
+    private static DownloadArch GetArch(string archString) => archString switch {
+        "Win32" => DownloadArch.x64,
+        _ => DownloadArch.Generic
+    };
+
+    private static string GetFileName(DownloadArch arch) => arch switch {
+        DownloadArch.x64 => "Installer-x64.exe",
+        DownloadArch.x86 => "Installer-x86.exe",
+        DownloadArch.Generic => "Installer-generic.zip",
+        _ => throw new ArgumentOutOfRangeException()};
 
     protected override async Task OnInitializedAsync()
     {
-        if (el == null)
+        if (_el == null)
         {
             await ReadyDownload();
         }
+    }
+
+    private enum DownloadArch
+    {
+        Generic,
+        x86,
+        x64
     }
 }
