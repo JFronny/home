@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - run: Crash this cuz i dont want it
     - uses: actions/checkout@v2
       with:
         persist-credentials: false
